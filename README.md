@@ -1,4 +1,4 @@
-![logo](assets/logo.svg)
+![logo](assets/logo.png)
 
 # Hermes JS
 
