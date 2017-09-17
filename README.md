@@ -8,7 +8,7 @@
 [![npm version](https://img.shields.io/npm/v/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)
 [![license](https://img.shields.io/github/license/pensierinmusica/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)
 
-Hermes JS is a universal action dispatcher for JavaScript apps.
+Hermes JS is a universal action dispatcher for JavaScript apps. It facilitates the design and management of action flows, both for interacting with the UI and back-end / third-party services.
 
 In case you wonder, the library name name is inspired by the [Greek messenger of the gods](https://en.wikipedia.org/wiki/Hermes).
 
