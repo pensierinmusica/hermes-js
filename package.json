@@ -2,9 +2,9 @@
   "name": "hermes-js",
   "version": "1.0.4",
   "description": "Universal action dispatcher for JavaScript apps",
-  "main": "dist/index.js",
-  "module": "dist/index.es6.js",
-  "jsnext:main": "dist/index.es6.js",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.js",
+  "jsnext:main": "dist/index.js",
   "directories": {
     "test": "test"
   },
@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "npm run build:umd && npm run build:umd:min && npm run build:es",
-    "build:es": "babel src --out-file dist/index.es6.js",
+    "build:es": "babel src --out-file dist/index.js",
     "build:umd": "rollup -c",
     "build:umd:min": "NODE_ENV=production rollup -c",
     "clean": "rimraf dist",
