@@ -3,7 +3,7 @@ const errorMsgs = {
   actionType: type => `The action "${type}" is not part of the provided actions list`,
   dispatch: '"dispatch" must be a function',
   meta: 'The action metadata must be an object',
-  middleware: 'The middleware list must be an array of functions',
+  middleware: 'The middleware list must be an array of functions'
 };
 
 function validateMeta (meta) {
@@ -39,7 +39,7 @@ export default (actionsList, dispatch, middleware) => {
       return dispatch({ type, data, meta: { ...meta } });
     }
     return dispatch({type, data, meta: {}});
-  };
+  }
   dispatcher.at = validateType;
   return dispatcher;
 };

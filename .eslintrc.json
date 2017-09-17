@@ -1,0 +1,10 @@
+{
+  "extends": "standard",
+  "rules": {
+    "no-console": "error",
+    "no-extra-semi": "error",
+    "no-var": "error",
+    "semi": ["error", "always"],
+    "space-before-function-paren": ["error", "always"]
+  }
+}
