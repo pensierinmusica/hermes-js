@@ -1,6 +1,6 @@
 {
   "name": "hermes-js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Universal action dispatcher for JavaScript apps",
   "main": "dist/index.js",
   "module": "dist/index.es6.js",
