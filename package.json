@@ -14,7 +14,7 @@
     "build:umd": "rollup -c",
     "build:umd:min": "NODE_ENV=production rollup -c",
     "precommit": "npm test",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "prepush": "npm test",
     "test": "jest --coverage"
   },
