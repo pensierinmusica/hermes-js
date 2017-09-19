@@ -165,13 +165,13 @@ In case you wonder what is a good file structure for projects using Hermes, this
 ```sh
 /actions
   /client
-  	/dispatcher.js
-  	/list.js
-  	/middleware
+    /dispatcher.js
+    /list.js
+    /middleware
   /server
-  	/dispatcher.js
-  	/list.js
-  	/middleware
+    /dispatcher.js
+    /list.js
+    /middleware
 ```
 
 It makes sense to group your actions in different sections (e.g. “client” and “server”). This can be more or less granular depending on your project needs. Then each section should have a dispatcher and a list. Finally, if you use any middleware store it in a separate sub-folder within its section.
