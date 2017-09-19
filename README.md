@@ -12,7 +12,7 @@ Hermes JS is a universal action dispatcher for JavaScript apps. It facilitates t
 
 In case you wonder, the library name name is inspired by the [Greek messenger of the gods](https://en.wikipedia.org/wiki/Hermes).
 
-## Description
+## Overview
 
 Let’s consider an “action” as any type of data that can be dispatched, might include metadata, and could expect a response to be returned (e.g. an HTTP request, a WebSocket event, or a Redux action).
 
@@ -58,6 +58,24 @@ const data = {
   if (await sd('NEW_USER', data)) cd('INCREMENT_COUNTER');
 })();
 ```
+Another common use case is to have certain actions for the back-end automatically dispatch the same action type for the front-end, but based on the first response outcome and data. This can be easily achieved through middleware (more details in the “Examples” section), so your final code looks like:
+
+```js
+(async () => {
+  await sd('USER_LOGIN', data);
+})();
+```
+
+And if you want such behaviour to happen only in some cases, get fine control through a metadata flag.
+
+```js
+(async () => {
+  await sd('USER_LOGIN', data, {reflow: true});
+})();
+```
+
+Complex action flows become extremely simple to code and use through Hermes. If it sounds interesting, check out the full documentation here below.
+
 ## Install
 
 `npm install hermes-js`
@@ -103,9 +121,9 @@ A list naming all the actions we want to be able to dispatch (having the action 
 
 ```js
 const actionsList = [
+  'NEW_MESSAGE',
   'NEW_USER',
-  'USER_LOGIN',
-  'NEW_MESSAGE'
+  'USER_LOGIN'
 ];
 ```
 
@@ -367,7 +385,7 @@ export default (action, next) => {
 };
 ```
 
-When interacting with an HTTP **REST API**, the url paths and HTTP methods for each action can be added directly in the dispatch function, or through a middleware that adds the correct metadata.
+When interacting with an HTTP **REST API**, the url paths and HTTP methods for each action can be added directly in the dispatch function, or through a middleware that adds the correct metadata (so you don’t need to manually include them each time).
 
 ```js
 // /actions/server/middleware/http-meta.js
@@ -416,7 +434,24 @@ const dispatch = async action => {
 export default hermes(actionsList, dispatch, [httpMeta]);
 ```
 
-In a similar fashion, middleware can also be used to extend the basic action **validation** and interrupt the dispatch cycle in case of invalid actions.
+Another interesting example is to use middleware and metadata for a back-end action to **automatically dispatch** the same action on the front-end, but based on the first response outcome and data.
+
+```js
+// /actions/server/middleware/reflow.js
+
+import cd from '/actions/client/dispatcher';
+
+export default (action, next, at) => {
+  if (action.meta.reflow) {
+    const res = next();
+    if (res) cd(action.type, res);
+    return res;
+  }
+  return next();
+};
+```
+
+It’s easy to extend the basic action **validation** and interrupt the dispatch cycle in case of invalid actions.
 
 ```js
 // /actions/server/middleware/validate.js
