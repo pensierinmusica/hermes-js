@@ -46,8 +46,8 @@ It supports asynchronous flows, and integrates well with the latest front-end or
 For example, actions like the ones above can be dispatched with:
 
 ```js
-import dc from '/dispatch-client.js';
-import ds from '/dispatch-server.js';
+import cd from '/actions/client/dispatcher';
+import sd from '/actions/server/dispatcher';
 
 const data = {
   email: 'hello@world.com',
@@ -55,7 +55,7 @@ const data = {
 };
 
 (async () => {
-  if (await ds('NEW_USER', data)) dc('INCREMENT_COUNTER');
+  if (await sd('NEW_USER', data)) cd('INCREMENT_COUNTER');
 })();
 ```
 ## Install
@@ -72,7 +72,7 @@ const dispatcher = hermes(actionsList, dispatch, [middleware]);
 dispatcher('MY_ACTION', [data], [meta]);
 
 // Validate an action
-dispatchers.at('MY_ACTION');
+dispatcher.at('MY_ACTION');
 ```
 
 Hermes takes 3 arguments:
@@ -158,6 +158,24 @@ Also, when you implement your own dispatch function (e.g. for server actions), e
 
 Most importantly, Hermes is agnostic about the action flow patterns you decide to implement, so choose whatever works best for you.
 
+## File structure
+
+In case you wonder what is a good file structure for projects using Hermes, this is a nice starting point.
+
+```sh
+/actions
+  /client
+  	/dispatcher.js
+  	/list.js
+  	/middleware
+  /server
+  	/dispatcher.js
+  	/list.js
+  	/middleware
+```
+
+It makes sense to group your actions in different sections (e.g. “client” and “server”). This can be more or less granular depending on your project needs. Then each section should have a dispatcher and a list. Finally, if you use any middleware store it in a separate sub-folder within its section.
+
 ## Examples
 
 Here are just a few examples of how Hermes can be used, although the power of this library lies in its flexibility and adaptability to different technologies.
@@ -169,7 +187,7 @@ Progressing through the different examples you might find references to code tha
 When used with Redux, you initialize the dispatcher by passing `store.dispatch` to it. Once the dispatcher has been initialized, any dispatched action should go through the dispatcher and not directly through `store.dispatch`.
 
 ```jsx
-// /actions/client.js
+// /actions/client/list.js
 
 export default [
   'INCREMENT_COUNTER',
@@ -177,26 +195,32 @@ export default [
   'USER_LOGIN'
 ];
 
-// /dispatchers/client.js
+// /actions/client/dispatcher.js
 
 import hermes from 'hermes-js';
-import { dispatch } from '/redux/store.js';
-import actions from '/actions/client.js';
 
-export default hermes(actions, dispatch);
+import { dispatch } from '/redux/store';
+import actionsList from '/actions/client/list';
+
+export default hermes(actionsList, dispatch);
 
 // /components/increment-button.js
 
 import React from 'react';
-import dc from '/dispatch-client.js';
+
+import cd from '/actions/client/dispatcher';
 
 export default props => (
-  <button onClick={ dc.incrementCounter(props.amount) } >Increment { props.amount }</button>
+  <button
+    onClick={ () => cd('INCREMENT_COUNTER', props.amount) }
+  >
+    Increment { props.amount }
+  </button>
 );
 
 // /redux/reducer.js
 
-import { at } from './dispatchers/client.js';
+import { at } from '/actions/client/dispatcher';
 
 const initialState = {
   counter: 0,
@@ -222,7 +246,7 @@ export default (state = initialState, action) => {
 Here’s an example of how a dispatcher for server actions could be initialized and used with an HTTP back-end.
 
 ```js
-// /actions/server.js
+// /actions/server/list.js
 
 export default [
   'GET_MESSAGES',
@@ -230,9 +254,13 @@ export default [
   'USER_LOGIN'
 ];
 
-// /dispatchers/api.js
+// /actions/server/dispatcher.js
 
-export default async { data } => {
+import hermes from 'hermes-js';
+
+import actionsList from '/actions/server/list';
+
+const dispatch = async { data } => {
   try {
     const res = await fetch('/api', {
       method: 'POST',
@@ -245,18 +273,12 @@ export default async { data } => {
   }
 };
 
-// /dispatchers/server.js
-
-import hermes from 'hermes-js';
-import api from '/dispatchers/api.js';
-import actions from '/actions/server.js';
-
-export default hermes(actions, api);
+export default hermes(actionsList, dispatch);
 
 // /components/login.js
 
-import dc from '/dispatchers/client.js';
-import ds from '/dispatchers/server.js';
+import cd from '/actions/client/dispatcher';
+import sd from '/actions/server/dispatcher';
 
 const formData = {
   email: 'hello@world.com',
@@ -264,8 +286,8 @@ const formData = {
 };
 
 async function login () {
-  const userData = await ds.userLogin(formData);
-  if (userData) dc.userLogin(userData);
+  const userData = await sd('USER_LOGIN', formData);
+  if (userData) cd('USER_LOGIN', userData);
   else alert('Please check your login credentials');
 };
 ```
@@ -275,13 +297,16 @@ async function login () {
 And here’s how a dispatcher could work with a WebSocket back-end.
 
 ```js
-// /dispatchers/api.js
+// /actions/server/dispatcher.js
 
 import io from 'socket.io-client';
+import hermes from 'hermes-js';
+
+import actionsList from '/actions/server/list';
 
 const socket = io('/api');
 
-export default action => {
+const dispatch = action => {
   return new Promise(resolve => {
     socket.emit('action', action, res => {
       if (res.status === 200) resolve(res.data === undefined ? true : res.data);
@@ -292,6 +317,8 @@ export default action => {
     });
   });
 };
+
+export default hermes(actionsList, dispatch);
 ```
 
 ### Middleware
@@ -303,7 +330,7 @@ The first one is an error handler that catches any un-handled errors down the ch
 In this case it just logs the error, but it could be integrated with any **error tracker**.
 
 ```js
-// /middleware/error-handler.js
+// /actions/client/middleware/error-handler.js
 
 export default (action, next) => {
   try {
@@ -314,22 +341,21 @@ export default (action, next) => {
   }
 };
 
-// /dispatchers/client.js
+// /actions/client/dispatcher.js
 
 import hermes from 'hermes-js';
-import { dispatch } from '/redux/store.js';
-import clientActions from '/actions/client.js';
-import errorHandler from '/middleware/error-handler.js';
+import { dispatch } from '/redux/store';
 
-const middleware = [errorHandler];
+import actionsList from '/actions/client/list';
+import errorHandler from '/actions/client/middleware/error-handler';
 
-export default hermes(clientActions, dispatch, middleware);
+export default hermes(actionsList, dispatch, [errorHandler]);
 ```
 
 Here’s an example of an analytics middleware. It simply logs every action, but it could be integrated with any third-party **analytics service**.
 
 ```js
-// /middleware/analytics.js
+// /actions/client/middleware/analytics.js
 
 function track (action) {
   console.log('tracking action', action.type);
@@ -344,7 +370,7 @@ export default (action, next) => {
 When interacting with an HTTP **REST API**, the url paths and HTTP methods for each action can be added directly in the dispatch function, or through a middleware that adds the correct metadata.
 
 ```js
-// /middleware/http-meta.js
+// /actions/server/middleware/http-meta.js
 
 export default (action, next, at) => {
   const { meta, type } = action;
@@ -366,9 +392,14 @@ export default (action, next, at) => {
   }
 };
 
-// /dispatchers/api.js
+// /actions/server/dispatcher.js
 
-export default async action => {
+import hermes from 'hermes-js';
+
+import actionsList from '/actions/server/list';
+import httpMeta from '/actions/client/middleware/http-meta';
+
+const dispatch = async action => {
   const { data, meta } = action;
   const { method, path } = meta;
   const init = { method };
@@ -381,12 +412,14 @@ export default async action => {
   }
   return await res.json();
 };
+
+export default hermes(actionsList, dispatch, [httpMeta]);
 ```
 
 In a similar fashion, middleware can also be used to extend the basic action **validation** and interrupt the dispatch cycle in case of invalid actions.
 
 ```js
-// /middleware/validate.js
+// /actions/server/middleware/validate.js
 
 function validateString (str, propName, type) {
   if (!str || typeof str !== 'string') {
@@ -410,7 +443,7 @@ export default (action, next, at) => {
 Or to **debounce** actions.
 
 ```js
-// /middleware/debounce.js
+// /actions/server/middleware/debounce.js
 
 const timers = {};
 
@@ -444,7 +477,6 @@ export default (action, next, at) => {
       return next();
   }
 };
-
 ```
 
 More complex logic can be implemented in middleware, for example to **interrupt an async action** through the use of a generator function.
@@ -461,19 +493,19 @@ To test a middleware chain, initialize Hermes with a dispatch function that retu
 import assert from 'assert';
 import deepEqual from 'deep-equal';
 import hermes from 'hermes-js';
-import actions from '/actions/client.js';
-import httpMeta from '/middleware/http-meta.js';
+
+import actionsList from '/actions/server/list';
+import httpMeta from '/actions/server/middleware/http-meta';
 
 const dispatch = action => action;
-const middleware = [httpMeta];
-const ds = hermes(actions, dispatch, middleware);
+const sd = hermes(actionsList, dispatch, [httpMeta]);
 
 const formData = {
   email: 'hello@world.com',
   password: 'pass'
 };
 
-const dispatchedAction = ds('USER_LOGIN', formData);
+const dispatchedAction = sd('USER_LOGIN', formData);
 
 const expectedAction = {
   type: 'USER_LOGIN',
@@ -493,9 +525,17 @@ assert(deepEqual(dispatchedAction, expectedAction));
 You can also write tests that simulate the full action cycle, using a mock back-end.
 
 ```js
-// /dispatchers/api.js
+// /tests/hermes-middleware.spec.js
 
-export default fetch => async action => {
+import assert from 'assert';
+import deepEqual from 'deep-equal';
+import hermes from 'hermes-js';
+import fetchMock from 'fetch-mock';
+
+import actionsList from '/actions/server/list';
+import httpMeta from '/actions/server/middleware/http-meta';
+
+const dispatch = fetch => async action => {
   const { data, meta } = action;
   const { method, path } = meta;
   const init = { method };
@@ -509,18 +549,7 @@ export default fetch => async action => {
   return await res.json();
 };
 
-// /tests/hermes-middleware.spec.js
-
-import assert from 'assert';
-import deepEqual from 'deep-equal';
-import hermes from 'hermes-js';
-import fetchMock from 'fetch-mock';
-import actions from '/actions/client.js';
-import api from '/dispatchers/api.js';
-import httpMeta from '/middleware/http-meta.js';
-
-const middleware = [httpMeta];
-const ds = hermes(actions, dispatch(fetchMock), middleware);
+const sd = hermes(actionsLis, dispatch(fetchMock), [httpMeta]);
 
 const email = 'hello@world.com';
 const correctFormData = { email, password: 'pass' };
@@ -536,11 +565,11 @@ const expectedResponse = {
   const path = '/api/login';
 
   fetchMock.post(path, expectedResponse);
-  const correctResponse = await ds('USER_LOGIN', correctFormData);
+  const correctResponse = await sd('USER_LOGIN', correctFormData);
   assert(deepEqual(correctResponse, expectedResponse));
 
   fetchMock.post(path, { status: 403 });
-  const wrongResponse = await ds('USER_LOGIN', wrongFormData);
+  const wrongResponse = await sd('USER_LOGIN', wrongFormData);
   assert(wrongResponse === false);
 
 })();
