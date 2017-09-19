@@ -8,7 +8,7 @@
 [![npm version](https://img.shields.io/npm/v/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)
 [![license](https://img.shields.io/github/license/pensierinmusica/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)
 
-Hermes JS is a universal action dispatcher for JavaScript apps. It facilitates the design and management of action flows, both for interacting with the UI and back-end / third-party services.
+Hermes JS is a universal action dispatcher for JavaScript apps. It facilitates the design and management of action flows, both for interacting with the UI and with back-end / third-party services.
 
 In case you wonder, the library name name is inspired by the [Greek messenger of the gods](https://en.wikipedia.org/wiki/Hermes).
 
@@ -58,23 +58,11 @@ const data = {
   if (await sd('NEW_USER', data)) cd('INCREMENT_COUNTER');
 })();
 ```
-Another common use case is to have certain actions for the back-end automatically dispatch the same action type for the front-end, but based on the first response outcome and data. This can be easily achieved through middleware (more details in the “Examples” section), so your final code looks like:
+Or imagine a fairly complex logic, where you want an action to send some data to the back-end, and then only if the response is successful dispatch the received data to the front-end. Through a simple middleware (implementation details in the examples below) all this can be expressed with:
 
 ```js
-(async () => {
-  await sd('USER_LOGIN', data);
-})();
+await sd('USER_LOGIN', data, {reflow: true});
 ```
-
-And if you want such behaviour to happen only in some cases, get fine control through a metadata flag.
-
-```js
-(async () => {
-  await sd('USER_LOGIN', data, {reflow: true});
-})();
-```
-
-Complex action flows become extremely simple to code and use through Hermes. If it sounds interesting, check out the full documentation here below.
 
 ## Install
 
@@ -117,7 +105,7 @@ Now let’s go back and take a look at the arguments to initialize Hermes in det
 
 *Array of strings*
 
-A list naming all the actions we want to be able to dispatch (having the action names in uppercase leaves less doubts about capitalization, but you can choose whatever format you prefer). For example:
+A list naming the actions we want to be able to dispatch (having the action names in uppercase leaves less doubts about capitalization, but you can choose whatever format you prefer). For example:
 
 ```js
 const actionsList = [
@@ -141,7 +129,7 @@ const dispatch = action => console.log('dispatching action', action);
 
 *Array of functions*
 
-A list of all the middleware that we want in the flow (if any). Each middleware function is passed three arguments.
+A list of the middleware that we want in the flow (if any). Each middleware function is passed three arguments.
 
 1. The action itself.
 2. The  `next` callback, that when invoked inside the middleware executes the next middleware in the list (if there’s no middleware left, `next` invokes `dispatch`).
@@ -164,21 +152,23 @@ const middleware = [
 
 ## Patterns
 
-Let’s call “sync action” any action that is meant for UI rendering on the front-end, hence synchronous (e.g. a Redux action), and “async action” any action that is meant for interaction with the back-end or a third part API, hence asynchronous (e.g. an HTTP request).
+It’s useful to distinguish between “sync” and “async” actions.
 
-After testing different approaches, it has emerged that separating sync and async actions leads to the cleanest logic and the best code scalability / maintainability / development speed.
+Sync actions only contain synchronous code  and are typically meant for front-end UI rendering (e.g. a Redux action). On the other hand, async actions contain asynchronous code and are mostly used to interact with the back-end or a third part API (e.g. through an HTTP request).
 
-In both cases middleware can include sync or async code. Any middleware code that affects an action (i.e. modifies it in any way) should be sync. Async code in middleware instead should not have side effects (e.g. error reporting, analytics, etc.) and the `next` callback should be invoked independently of the outcome of the async code.
+In our experience clearly separating sync and async actions leads to the cleanest logic and the best code scalability / maintainability / development speed.
 
-One of the reasons why this library was created is exactly to avoid async code in middleware that can affect an action, like other libraries instead enforce. Such code can be moved to async actions. We believe it’s better to dispatch sync actions before, after, or depending on the outcome of async actions (and not mix the two through middleware).
+In both cases, any middleware code that affects an action should be synchronous. Asynchronous code in middleware can be used as long as it doesn’t affect the action at all (e.g. error reporting, analytics, etc.). This means that the `next` callback should be invoked independently of the outcome of asynchronous operations.
 
-Also, when you implement your own dispatch function (e.g. for server actions), evaluate whether it should handle all errors locally and return `false` (i.e. centralized error handler), or return the error and let the callee handle the different cases (i.e. distributed error handler).
+One of the reasons why this library was created is exactly to avoid asynchronous code in middleware that can affect an action, like other libraries instead enforce. Such code can be moved to async actions. You’ll get better results by dispatching sync actions before, after, or depending on the outcome of async actions.
 
-Most importantly, Hermes is agnostic about the action flow patterns you decide to implement, so choose whatever works best for you.
+Finally, when you implement your own dispatch function (e.g. for server actions), evaluate whether it should handle all errors locally and return `false` (i.e. use a centralized error handler), or return the error and let the callee handle the different cases (i.e. use a distributed error handler).
+
+Above all, keep in mind that Hermes is agnostic about the action flow patterns you decide to implement, so choose what fits best with your project's requirements.
 
 ## File structure
 
-In case you wonder what is a good file structure for projects using Hermes, this is a nice starting point.
+In case you wonder how to structure your files using Hermes, this is a nice starting point.
 
 ```sh
 /actions
@@ -192,17 +182,17 @@ In case you wonder what is a good file structure for projects using Hermes, this
     /middleware
 ```
 
-It makes sense to group your actions in different sections (e.g. “client” and “server”). This can be more or less granular depending on your project needs. Then each section should have a dispatcher and a list. Finally, if you use any middleware store it in a separate sub-folder within its section.
+It makes sense to group actions in different sections (e.g. “client” and “server”). This can be more or less granular depending on your project needs. Then each section contains its actions list and dispatcher. Finally, if you use any middleware store it in a separate sub-folder within its section.
 
 ## Examples
 
-Here are just a few examples of how Hermes can be used, although the power of this library lies in its flexibility and adaptability to different technologies.
+Here you find a few examples of how Hermes can be used, although the power of this library lies in its flexibility and adaptability to different technologies.
 
-Progressing through the different examples you might find references to code that is defined in previous examples (otherwise this section would become too long).
+Progressing through the examples you’ll find references to code that is defined in previous examples.
 
 ### React + Redux
 
-When used with Redux, you initialize the dispatcher by passing `store.dispatch` to it. Once the dispatcher has been initialized, any dispatched action should go through the dispatcher and not directly through `store.dispatch`.
+Initialize an Hermes dispatcher by passing it `store.dispatch`, and then use this dispatcher any time you want to dispatch an action (i.e. `store.dispatch` should not be directly used anymore).
 
 ```jsx
 // /actions/client/list.js
@@ -261,7 +251,7 @@ export default (state = initialState, action) => {
 
 ### HTTP
 
-Here’s an example of how a dispatcher for server actions could be initialized and used with an HTTP back-end.
+This is how a dispatcher for server actions could be initialized and used with an HTTP back-end.
 
 ```js
 // /actions/server/list.js
@@ -341,11 +331,11 @@ export default hermes(actionsList, dispatch);
 
 ### Middleware
 
-Now, let’s check a few middleware examples.
+Let’s check a few middleware examples.
 
-The first one is an error handler that catches any un-handled errors down the chain (i.e. other middleware and the dispatch function) if placed as the first element in the middleware array.
+The first one is an **error handler** that catches any un-handled exceptions down the chain (i.e. other middleware and the dispatch function), if placed as the first element in the middleware array.
 
-In this case it just logs the error, but it could be integrated with any **error tracker**.
+In this case it just logs the error, but you could connect it to any error tracker or crash reporter.
 
 ```js
 // /actions/client/middleware/error-handler.js
@@ -370,7 +360,7 @@ import errorHandler from './middleware/error-handler';
 export default hermes(actionsList, dispatch, [errorHandler]);
 ```
 
-Here’s an example of an analytics middleware. It simply logs every action, but it could be integrated with any third-party **analytics service**.
+This is a simple **analytics** middleware that logs every action, but could be easily integrated with any third-party analytics service.
 
 ```js
 // /actions/client/middleware/analytics.js
@@ -385,7 +375,7 @@ export default (action, next) => {
 };
 ```
 
-When interacting with an HTTP **REST API**, the url paths and HTTP methods for each action can be added directly in the dispatch function, or through a middleware that adds the correct metadata (so you don’t need to manually include them each time).
+If your app interacts with an HTTP **REST API**, the url paths and HTTP methods for each action can be added directly in the dispatch function, or through a middleware that adds the correct metadata (so you don’t need to manually include it each time).
 
 ```js
 // /actions/server/middleware/http-meta.js
@@ -434,7 +424,7 @@ const dispatch = async action => {
 export default hermes(actionsList, dispatch, [httpMeta]);
 ```
 
-Another interesting example is to use middleware and metadata for a back-end action to **automatically dispatch** the same action on the front-end, but based on the first response outcome and data.
+Another interesting use case for back-end actions middleware is to **automatically dispatch** the same action on the front-end, but based on the server response outcome and data.
 
 ```js
 // /actions/server/middleware/reflow.js
@@ -451,7 +441,7 @@ export default (action, next, at) => {
 };
 ```
 
-It’s easy to extend the basic action **validation** and interrupt the dispatch cycle in case of invalid actions.
+It’s also easy to extend the basic action **validation** and interrupt the dispatch cycle in case of invalid actions.
 
 ```js
 // /actions/server/middleware/validate.js
@@ -514,7 +504,7 @@ export default (action, next, at) => {
 };
 ```
 
-More complex logic can be implemented in middleware, for example to **interrupt an async action** through the use of a generator function.
+Finally, more complex logic can be implemented in middleware, for example to **interrupt an async action** through the use of a generator function.
 
 ### Testing
 
