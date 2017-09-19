@@ -58,7 +58,7 @@ const data = {
   if (await sd('NEW_USER', data)) cd('INCREMENT_COUNTER');
 })();
 ```
-Or imagine a fairly complex logic, where you want an action to send some data to the back-end, and then only if the response is successful dispatch the received data to the front-end. Through a simple middleware (implementation details in the examples below) all this can be expressed with:
+Or imagine a fairly complex logic, where you want an action to send some data to the back-end, and then only if the response is successful update the UI with the received data. Through a simple middleware (implementation details in the examples below) all this can be expressed with:
 
 ```js
 await sd('USER_LOGIN', data, {reflow: true});
