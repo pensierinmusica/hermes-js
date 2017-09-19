@@ -200,7 +200,7 @@ export default [
 import hermes from 'hermes-js';
 
 import { dispatch } from '/redux/store';
-import actionsList from '/actions/client/list';
+import actionsList from './list';
 
 export default hermes(actionsList, dispatch);
 
@@ -258,7 +258,7 @@ export default [
 
 import hermes from 'hermes-js';
 
-import actionsList from '/actions/server/list';
+import actionsList from './list';
 
 const dispatch = async { data } => {
   try {
@@ -302,7 +302,7 @@ And here’s how a dispatcher could work with a WebSocket back-end.
 import io from 'socket.io-client';
 import hermes from 'hermes-js';
 
-import actionsList from '/actions/server/list';
+import actionsList from './list';
 
 const socket = io('/api');
 
@@ -346,8 +346,8 @@ export default (action, next) => {
 import hermes from 'hermes-js';
 import { dispatch } from '/redux/store';
 
-import actionsList from '/actions/client/list';
-import errorHandler from '/actions/client/middleware/error-handler';
+import actionsList from './list';
+import errorHandler from './middleware/error-handler';
 
 export default hermes(actionsList, dispatch, [errorHandler]);
 ```
@@ -396,8 +396,8 @@ export default (action, next, at) => {
 
 import hermes from 'hermes-js';
 
-import actionsList from '/actions/server/list';
-import httpMeta from '/actions/client/middleware/http-meta';
+import actionsList from './list';
+import httpMeta from './middleware/http-meta';
 
 const dispatch = async action => {
   const { data, meta } = action;
