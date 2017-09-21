@@ -479,7 +479,7 @@ function debounce (type, next, time) {
         resolve(next());
       }, time);
       timers[type] = () => {
-        cancelTimeout(id);
+        clearTimeout(id);
         resolve(false);
       };
     });
