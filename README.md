@@ -430,9 +430,9 @@ Another interesting use case for back-end actions middleware is to **automatical
 
 import cd from '/actions/client/dispatcher';
 
-export default (action, next) => {
+export default async (action, next) => {
   if (action.meta.reflow) {
-    const res = next();
+    const res = await next();
     if (res) cd(action.type, res);
     return res;
   }
