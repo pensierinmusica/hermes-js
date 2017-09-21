@@ -40,6 +40,5 @@ export default (actionsList, dispatch, middleware) => {
     }
     return dispatch({type, data, meta: {}});
   }
-  dispatcher.at = validateType;
   return dispatcher;
 };

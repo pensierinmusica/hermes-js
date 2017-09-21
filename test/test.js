@@ -77,15 +77,6 @@ describe('Hermes', () => {
       expect(() => dispatcher(actionType, data, () => {})).toThrow();
     });
 
-    it('provides a basic validator function under the `at` property', () => {
-      expect(typeof dispatcher.at).toBe('function');
-    });
-
-    it('the validator simply returns an action name or throws an error if it’s not part of the original actions list', () => {
-      expect(() => dispatcher.at('foo')).toThrow();
-      expect(dispatcher.at(actionType)).toBe(actionType);
-    });
-
     it('invokes the dispatch function with the dispatched action', () => {
       const dispatch1 = jest.fn();
       const dispatch2 = jest.fn();
@@ -117,7 +108,7 @@ describe('Hermes', () => {
       expect(dispatcher2(actionType)).toBe(res);
     });
 
-    it('invokes every middleware function passing the action, the next callback, and the validator', () => {
+    it('invokes every middleware function passing the action, the next callback, and a validator function', () => {
       const middleware1 = jest.fn((action, next) => next());
       const middleware2 = jest.fn();
       const middlewares = [middleware1, middleware2];
@@ -132,9 +123,18 @@ describe('Hermes', () => {
           expect(middleware.mock.calls[i].length).toBe(3);
           expect(middleware.mock.calls[i][0]).toEqual(actions[i]);
           expect(typeof middleware.mock.calls[i][1]).toBe('function');
-          expect(middleware.mock.calls[i][2]).toBe(dispatcher.at);
+          expect(typeof middleware.mock.calls[i][2]).toBe('function');
         }
       });
+    });
+
+    it('the validator simply returns an action name or throws an error if it’s not part of the original actions list', () => {
+      let validator;
+      const middleware = (action, next, at) => (validator = at);
+      const dispatcher = hermes(actionsList, dispatch, [middleware]);
+      dispatcher(actionType);
+      expect(() => validator('foo')).toThrow();
+      expect(validator(actionType)).toBe(actionType);
     });
 
     it('invokes each middleware in the correct order, and dispatch at the end', () => {

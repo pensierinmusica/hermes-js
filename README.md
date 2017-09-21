@@ -91,13 +91,14 @@ It returns a function to dispatch actions (i.e. a “dispacther”), which:
 
 - When invoked automatically checks that the action type is part of the original actions list.
 - If a list of middleware has been provided, before dispatching the action, runs it through each middleware following the original list order.
-- Offers a basic action validator under the `at` property. The validator takes one argument, which is the action name (String), and simply returns it or throws an error if it’s not part of the original actions list.
 
 Each dispatcher takes 3 arguments:
 
 1. The action type  - *String*
 2. The action data (optional) - *Primitive or Object*
 3. The action metadata (optional) - *Object*
+
+Metadata typically  is temporary information that is needed in middleware or in the dispatch function, but should be removed before the action is sent to its final destination.
 
 Now let’s go back and take a look at the arguments to initialize Hermes in details.
 
@@ -133,7 +134,7 @@ A list of the middleware that we want in the flow (if any). Each middleware func
 
 1. The action itself.
 2. The  `next` callback, that when invoked inside the middleware executes the next middleware in the list (if there’s no middleware left, `next` invokes `dispatch`).
-3. The basic action validator.
+3. A basic action validator. The validator takes one argument, which is the action name (String), and simply returns it or throws an error if it’s not part of the original actions list.
 
 For example:
 
@@ -207,10 +208,10 @@ export default [
 
 import hermes from 'hermes-js';
 
-import { dispatch } from '/redux/store';
+import store from '/redux/store';
 import actionsList from './list';
 
-export default hermes(actionsList, dispatch);
+export default hermes(actionsList, store.dispatch);
 
 // /components/increment-button.js
 
@@ -228,8 +229,6 @@ export default props => (
 
 // /redux/reducer.js
 
-import { at } from '/actions/client/dispatcher';
-
 const initialState = {
   counter: 0,
   user: null
@@ -237,10 +236,10 @@ const initialState = {
 
 export default (state = initialState, action) => {
   switch (action.type) {
-    case at('INCREMENT_COUNTER'):
+    case 'INCREMENT_COUNTER':
       const amount = action.data;
       return {...state, counter: state.counter + amount};
-    case at('USER_LOGIN'):
+    case 'USER_LOGIN':
       const user = action.data;
       return {...state, user};
     default:
@@ -268,7 +267,7 @@ import hermes from 'hermes-js';
 
 import actionsList from './list';
 
-const dispatch = async { data } => {
+const dispatch = async ({ data }) => {
   try {
     const res = await fetch('/api', {
       method: 'POST',
@@ -352,12 +351,12 @@ export default (action, next) => {
 // /actions/client/dispatcher.js
 
 import hermes from 'hermes-js';
-import { dispatch } from '/redux/store';
+import store from '/redux/store';
 
 import actionsList from './list';
 import errorHandler from './middleware/error-handler';
 
-export default hermes(actionsList, dispatch, [errorHandler]);
+export default hermes(actionsList, store.dispatch, [errorHandler]);
 ```
 
 This is a simple **analytics** middleware that logs every action, but could be easily integrated with any third-party analytics service.
