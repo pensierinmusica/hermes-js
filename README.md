@@ -10,7 +10,7 @@
 
 Hermes JS is a universal action dispatcher for JavaScript apps. It facilitates the design and management of action flows, both for interacting with the UI and with back-end / third-party services.
 
-In case you wonder, the library name name is inspired by the [Greek messenger of the gods](https://en.wikipedia.org/wiki/Hermes).
+In case you wonder, the library name is inspired by the [Greek messenger of the gods](https://en.wikipedia.org/wiki/Hermes).
 
 ## Overview
 
@@ -161,7 +161,7 @@ In our experience clearly separating sync and async actions leads to the cleanes
 
 In both cases, any middleware code that affects an action should be synchronous. Asynchronous code in middleware can be used as long as it doesn’t affect the action at all (e.g. error reporting, analytics, etc.). This means that the `next` callback should be invoked independently of the outcome of asynchronous operations.
 
-One of the reasons why this library was created is exactly to avoid asynchronous code in middleware that can affect an action, like other libraries instead enforce. Such code can be moved to async actions. You’ll get better results by dispatching sync actions before, after, or depending on the outcome of async actions.
+One of the reasons why this library was created is exactly to avoid asynchronous code in middleware that can affect an action, like other libraries instead enforce. Such code can be moved to async actions. We think you’ll get better results by dispatching sync actions before, after, or depending on the outcome of async actions.
 
 Finally, when you implement your own dispatch function (e.g. for server actions), evaluate whether it should handle all errors locally and return `false` (i.e. use a centralized error handler), or return the error and let the callee handle the different cases (i.e. use a distributed error handler).
 
