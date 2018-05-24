@@ -2,7 +2,7 @@
 
 # Hermes JS
 
-[![build status](https://img.shields.io/travis/pensierinmusica/hermes-js.svg)](https://travis-ci.org/pensierinmusica/hermes-js)
+[![build status](https://img.shields.io/travis/pensierinmusica/hermes-js.svg)](https://travis-ci.com/pensierinmusica/hermes-js)
 [![test coverage](https://img.shields.io/coveralls/pensierinmusica/hermes-js.svg)](https://coveralls.io/r/pensierinmusica/hermes-js)
 [![dependencies](https://img.shields.io/david/pensierinmusica/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)
 [![npm version](https://img.shields.io/npm/v/hermes-js.svg)](https://www.npmjs.com/package/hermes-js)

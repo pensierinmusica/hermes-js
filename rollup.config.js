@@ -1,12 +1,12 @@
 import babel from 'rollup-plugin-babel';
-import uglify from 'rollup-plugin-uglify';
+import { uglify } from 'rollup-plugin-uglify';
 
 const conf = {
   input: 'src/index.js',
   output: {
     file: 'dist/index.umd.js',
     format: 'umd',
-    name: 'hermes',
+    name: 'hermes'
   },
   plugins: [babel()]
 };
